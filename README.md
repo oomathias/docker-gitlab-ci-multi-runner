@@ -1,6 +1,8 @@
-[![Docker Repository on Quay.io](https://quay.io/repository/sameersbn/gitlab-ci-multi-runner/status "Docker Repository on Quay.io")](https://quay.io/repository/sameersbn/gitlab-ci-multi-runner)
+# >>>> DO NOT USE THIS REPO YET <<<<
 
-# sameersbn/gitlab-ci-multi-runner:1.1.4-4
+[![Docker Repository on Quay](https://quay.io/repository/oomathias/docker-gitlab-ci-multi-runner/status "Docker Repository on Quay")](https://quay.io/repository/oomathias/docker-gitlab-ci-multi-runner)
+
+# oomathias/gitlab-ci-multi-runner:latest
 
 - [Introduction](#introduction)
   - [Contributing](#contributing)
@@ -46,18 +48,18 @@ If the above recommendations do not help then [report your issue](../../issues/n
 
 ## Installation
 
-Automated builds of the image are available on [Dockerhub](https://hub.docker.com/r/sameersbn/gitlab-ci-multi-runner) and is the recommended method of installation.
+Automated builds of the image are available on [Dockerhub](https://hub.docker.com/r/oomathias/gitlab-ci-multi-runner) and is the recommended method of installation.
 
-> **Note**: Builds are also available on [Quay.io](https://quay.io/repository/sameersbn/gitlab-ci-multi-runner)
+> **Note**: Builds are also available on [Quay.io](https://quay.io/repository/oomathias/gitlab-ci-multi-runner)
 
 ```bash
-docker pull sameersbn/gitlab-ci-multi-runner:1.1.4-4
+docker pull oomathias/gitlab-ci-multi-runner:latest
 ```
 
 Alternatively you can build the image yourself.
 
 ```bash
-docker build -t sameersbn/gitlab-ci-multi-runner github.com/sameersbn/docker-gitlab-ci-multi-runner
+docker build -t oomathias/gitlab-ci-multi-runner github.com/oomathias/docker-gitlab-ci-multi-runner
 ```
 
 ## Quickstart
@@ -69,7 +71,7 @@ docker run --name gitlab-ci-multi-runner -d --restart=always \
   --volume /srv/docker/gitlab-runner:/home/gitlab_ci_multi_runner/data \
   --env='CI_SERVER_URL=http://git.example.com/ci' --env='RUNNER_TOKEN=xxxxxxxxx' \
   --env='RUNNER_DESCRIPTION=myrunner' --env='RUNNER_EXECUTOR=shell' \
-  sameersbn/gitlab-ci-multi-runner:1.1.4-4
+  oomathias/gitlab-ci-multi-runner:latest
 ```
 
 *Alternatively, you can use the sample [docker-compose.yml](docker-compose.yml) file to start the container using [Docker Compose](https://docs.docker.com/compose/)*
@@ -83,7 +85,7 @@ You can customize the launch command by specifying arguments to `gitlab-ci-multi
 ```bash
 docker run --name gitlab-ci-multi-runner -it --rm \
   --volume /srv/docker/gitlab-runner:/home/gitlab_ci_multi_runner/data \
-  sameersbn/gitlab-ci-multi-runner:1.1.4-4 --help
+  oomathias/gitlab-ci-multi-runner:latest --help
 ```
 
 ## Persistence
@@ -118,7 +120,7 @@ The runner is configured to look for trusted SSL certificates at `/home/gitlab_c
 
 Create a file named `ca.crt` in a `certs` folder at the root of your persistent data volume. The `ca.crt` file should contain the root certificates of all the servers you want to trust.
 
-With respect to GitLab, append the contents of the `gitlab.crt` file to `ca.crt`. For more information on the `gitlab.crt` file please refer the [README](https://github.com/sameersbn/docker-gitlab/blob/master/README.md#ssl) of the [docker-gitlab](https://github.com/sameersbn/docker-gitlab) container.
+With respect to GitLab, append the contents of the `gitlab.crt` file to `ca.crt`. For more information on the `gitlab.crt` file please refer the [README](https://github.com/oomathias/docker-gitlab/blob/master/README.md#ssl) of the [docker-gitlab](https://github.com/oomathias/docker-gitlab) container.
 
 Similarly you should also trust the SSL certificate of the GitLab CI server by appending the contents of the `gitlab-ci.crt` file to `ca.crt`.
 
@@ -131,7 +133,7 @@ To upgrade to newer releases:
   1. Download the updated Docker image:
 
   ```bash
-  docker pull sameersbn/gitlab-ci-multi-runner:1.1.4-4
+  docker pull oomathias/gitlab-ci-multi-runner:latest
   ```
 
   2. Stop the currently running image:
@@ -151,7 +153,7 @@ To upgrade to newer releases:
   ```bash
   docker run -name gitlab-ci-multi-runner -d \
     [OPTIONS] \
-    sameersbn/gitlab-ci-multi-runner:1.1.4-4
+    oomathias/gitlab-ci-multi-runner:latest
   ```
 
 ## Shell Access

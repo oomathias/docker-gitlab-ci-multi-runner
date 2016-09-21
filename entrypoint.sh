@@ -36,14 +36,14 @@ update_ca_certificates() {
 }
 
 grant_access_to_docker_socket() {
-  if [ -S /run/docker.sock ]; then
-    DOCKER_SOCKET_GID=$(stat -c %g  /run/docker.sock)
-    DOCKER_SOCKET_GROUP=$(stat -c %G /run/docker.sock)
+  if [ -S /var/run/docker.sock ]; then
+    DOCKER_SOCKET_GID=$(stat -c %g /var/run/docker.sock)
+    DOCKER_SOCKET_GROUP=$(stat -c %G /var/run/docker.sock)
     if [[ ${DOCKER_SOCKET_GROUP} == "UNKNOWN" ]]; then
       DOCKER_SOCKET_GROUP=docker
-      groupadd -g ${DOCKER_SOCKET_GID} ${DOCKER_SOCKET_GROUP}
+      addgroup -g ${DOCKER_SOCKET_GID} ${DOCKER_SOCKET_GROUP}
     fi
-    usermod -a -G ${DOCKER_SOCKET_GROUP} ${GITLAB_CI_MULTI_RUNNER_USER}
+    adduser ${GITLAB_CI_MULTI_RUNNER_USER} ${DOCKER_SOCKET_GROUP}
   fi
 }
 
@@ -52,7 +52,10 @@ configure_ci_runner() {
     if [[ -n ${CI_SERVER_URL} && -n ${RUNNER_TOKEN} && -n ${RUNNER_DESCRIPTION} && -n ${RUNNER_EXECUTOR} ]]; then
       sudo -HEu ${GITLAB_CI_MULTI_RUNNER_USER} \
         gitlab-ci-multi-runner register --config ${GITLAB_CI_MULTI_RUNNER_DATA_DIR}/config.toml \
-          -n -u "${CI_SERVER_URL}" -r "${RUNNER_TOKEN}" --name "${RUNNER_DESCRIPTION}" --executor "${RUNNER_EXECUTOR}"
+          -n -u "${CI_SERVER_URL}" -r "${RUNNER_TOKEN}" --name "${RUNNER_DESCRIPTION}" --executor "${RUNNER_EXECUTOR}" \
+          $(ENV_VARS_TMP=($ENV_VARS); printf " --env %s" "${ENV_VARS_TMP[@]}") \
+          --docker-volumes /var/run/docker.sock:/var/run/docker.sock \
+
     else
       sudo -HEu ${GITLAB_CI_MULTI_RUNNER_USER} \
         gitlab-ci-multi-runner register --config ${GITLAB_CI_MULTI_RUNNER_DATA_DIR}/config.toml
@@ -78,7 +81,8 @@ if [[ -z ${1} ]]; then
   configure_ci_runner
 
   start-stop-daemon --start \
-    --chuid ${GITLAB_CI_MULTI_RUNNER_USER}:${GITLAB_CI_MULTI_RUNNER_USER} \
+    --user ${GITLAB_CI_MULTI_RUNNER_USER} \
+    --group ${GITLAB_CI_MULTI_RUNNER_USER} \
     --exec $(which gitlab-ci-multi-runner) -- run \
       --working-directory ${GITLAB_CI_MULTI_RUNNER_DATA_DIR} \
       --config ${GITLAB_CI_MULTI_RUNNER_DATA_DIR}/config.toml ${EXTRA_ARGS}
