@@ -5,9 +5,6 @@ ENV GITLAB_CI_MULTI_RUNNER_USER=gitlab_ci_multi_runner \
     GITLAB_CI_MULTI_RUNNER_HOME_DIR="/home/gitlab_ci_multi_runner"
 ENV GITLAB_CI_MULTI_RUNNER_DATA_DIR="${GITLAB_CI_MULTI_RUNNER_HOME_DIR}/data"
 
-ADD https://github.com/Yelp/dumb-init/releases/download/v1.0.2/dumb-init_1.0.2_amd64 /usr/local/bin/dumb-init
-RUN chmod +x /usr/local/bin/dumb-init
-
 RUN apk --no-cache --update add \
   bash \
   ca-certificates \
@@ -25,11 +22,19 @@ RUN apk --no-cache --update add \
   vim \
   wget
 
+# add dumb-init
+RUN curl -s https://api.github.com/repos/Yelp/dumb-init/releases \
+  | grep browser_download_url | grep amd64 | head -n 1 | cut -d '"' -f 4 | \
+  wget -q -i - -O /usr/local/bin/dumb-init
+RUN chmod +x /usr/local/bin/dumb-init
+
 # add glibc
-RUN wget -q -O /etc/apk/keys/sgerrand.rsa.pub https://raw.githubusercontent.com/sgerrand/alpine-pkg-glibc/master/sgerrand.rsa.pub && \
-    wget -q https://github.com/sgerrand/alpine-pkg-glibc/releases/download/2.23-r3/glibc-2.23-r3.apk && \
-    apk add glibc-2.23-r3.apk && \
-    rm -r glibc-2.23-r3.apk
+RUN curl -s https://api.github.com/repos/sgerrand/alpine-pkg-glibc/releases \
+  | grep browser_download_url | grep .apk | grep -v unreleased | grep -v bin | grep -v i18n \
+  | head -n 1 | cut -d '"' -f 4 | \
+  wget -q -i - -O glibc.apk \
+  && apk add --allow-untrusted glibc.apk \
+  && rm -r glibc.apk
 
 # add gitlab-ci-multi-runner
 RUN wget -q -O /usr/local/bin/gitlab-ci-multi-runner https://gitlab-ci-multi-runner-downloads.s3.amazonaws.com/latest/binaries/gitlab-ci-multi-runner-linux-amd64 && \
