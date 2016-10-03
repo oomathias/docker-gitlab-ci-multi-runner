@@ -1,57 +1,80 @@
 FROM alpine:latest
-MAINTAINER mathias@beugnon.fr
+MAINTAINER Mathias Beugnon <mathias@beugnon.fr>
 
-ENV GITLAB_CI_MULTI_RUNNER_USER=gitlab_ci_multi_runner \
+ARG VCS_REF
+ARG BUILD_DATE
+
+ENV DUMB_INIT_VERSION="1.1.3" \
+    GLIBC_VERSION="2.23-r3" \
+    RANCHER_COMPOSE_VERSION="0.8.6" \
+    GITLAB_CI_MULTI_RUNNER_VERSION="1.6.0" \
+    GITLAB_CI_MULTI_RUNNER_USER=gitlab_ci_multi_runner \
     GITLAB_CI_MULTI_RUNNER_HOME_DIR="/home/gitlab_ci_multi_runner"
 ENV GITLAB_CI_MULTI_RUNNER_DATA_DIR="${GITLAB_CI_MULTI_RUNNER_HOME_DIR}/data"
 
-RUN apk --no-cache --update add \
-  bash \
-  ca-certificates \
-  curl \
-  docker \
-  git \
-  grep \
-  libc6-compat \
-  openrc \
-  openssh-client \
-  openssl \
-  sudo \
-  tar \
-  unzip \
-  vim \
-  wget
+LABEL org.label-schema.name="docker-gitlab-ci-multi-runner" \
+      org.label-schema.url="https://github.com/oomathias/docker-gitlab-ci-multi-runner" \
+      org.label-schema.docker.dockerfile="/Dockerfile" \
+      org.label-schema.vcs-url="https://github.com/oomathias/docker-gitlab-ci-multi-runner" \
+      org.label-schema.vcs-type="Git" \
+      org.label-schema.vcs-ref=$VCS_REF \
+      org.label-schema.build-date=$BUILD_DATE \
+      org.label-schema.schema-version="1.0" \
 
-# add dumb-init
-RUN curl -s https://api.github.com/repos/Yelp/dumb-init/releases \
-  | grep browser_download_url | grep amd64 | head -n 1 | cut -d '"' -f 4 | \
-  wget -q -i - -O /usr/local/bin/dumb-init
-RUN chmod +x /usr/local/bin/dumb-init
+      com.gitlab.gitlab_ci_multi_runner=$GITLAB_CI_MULTI_RUNNER_VERSION \
+      com.yelp.dumb-init=$DUMB_INIT_VERSION \
+      com.sgerrand.alpine-pkg-glibc=$GLIBC_VERSION \
+      com.rancher.compose=$RANCHER_COMPOSE_VERSION
 
-# add glibc
-RUN curl -s https://api.github.com/repos/sgerrand/alpine-pkg-glibc/releases \
-  | grep browser_download_url | grep .apk | grep -v unreleased | grep -v bin | grep -v i18n \
-  | head -n 1 | cut -d '"' -f 4 | \
-  wget -q -i - -O glibc.apk \
-  && apk add --allow-untrusted glibc.apk \
-  && rm -r glibc.apk
+# Install packages
+RUN \
+  # tmp
+  echo " ---> Initializing and Updating" \
+  # && TMP_APK='' \
+  # && apk add --update --no-cache $TMP_APK \
+  && apk add --update --no-cache \
+    bash ca-certificates curl docker git grep libc6-compat \
+    openrc openssh-client openssl sudo tar unzip wget \
 
-# add gitlab-ci-multi-runner
-RUN wget -q -O /usr/local/bin/gitlab-ci-multi-runner https://gitlab-ci-multi-runner-downloads.s3.amazonaws.com/latest/binaries/gitlab-ci-multi-runner-linux-amd64 && \
-  chmod +x /usr/local/bin/gitlab-ci-multi-runner && \
-	ln -s /usr/local/bin/gitlab-ci-multi-runner /usr/local/bin/gitlab-runner
+  # dumb-init
+  && echo " ---> Installing dumb-init v${DUMB_INIT_VERSION}" \
+  && curl -LOsS https://github.com/Yelp/dumb-init/releases/download/v${DUMB_INIT_VERSION}/dumb-init_${DUMB_INIT_VERSION}_amd64 \
+  && curl -LOsS https://github.com/Yelp/dumb-init/releases/download/v${DUMB_INIT_VERSION}/sha256sums \
+  && fgrep "dumb-init_${DUMB_INIT_VERSION}_amd64$" sha256sums | sha256sum -c - \
+  && mv dumb-init_${DUMB_INIT_VERSION}_amd64 /usr/local/bin/dumb-init \
+  && chmod +x /usr/local/bin/dumb-init \
+  && rm sha256sums \
 
-# add git user
-RUN adduser -D -s /bin/false -g 'GitLab CI Runner' ${GITLAB_CI_MULTI_RUNNER_USER}
-RUN sudo -HEu ${GITLAB_CI_MULTI_RUNNER_USER} ln -s ${GITLAB_CI_MULTI_RUNNER_DATA_DIR}/.ssh ${GITLAB_CI_MULTI_RUNNER_HOME_DIR}/.ssh
+  # glibc
+  && echo " ---> Installing glibc v${GLIBC_VERSION}" \
+  && curl -LOsS https://github.com/sgerrand/alpine-pkg-glibc/releases/download/${GLIBC_VERSION}/glibc-${GLIBC_VERSION}.apk \
+  && curl -LsS -o /etc/apk/keys/sgerrand.rsa.pub https://github.com/sgerrand/alpine-pkg-glibc/releases/download/${GLIBC_VERSION}/sgerrand.rsa.pub \
+  && apk add glibc-${GLIBC_VERSION}.apk \
+  && rm /etc/apk/keys/sgerrand.rsa.pub glibc-${GLIBC_VERSION}.apk \
 
-# add rancher-compose
-RUN wget -q https://releases.rancher.com/compose/latest/rancher-compose-linux-amd64.tar.gz \
+  # gitlab-ci-multi-runner
+  && echo " ---> Installing gitlab-ci-multi-runner v${GITLAB_CI_MULTI_RUNNER_VERSION}" \
+  && curl -LsS -o /usr/local/bin/gitlab-ci-multi-runner https://gitlab-ci-multi-runner-downloads.s3.amazonaws.com/v${GITLAB_CI_MULTI_RUNNER_VERSION}/binaries/gitlab-ci-multi-runner-linux-amd64 \
+  && chmod +x /usr/local/bin/gitlab-ci-multi-runner \
+
+  # rancher-compose
+  && echo " ---> Installing rancher-compose v${RANCHER_COMPOSE_VERSION}" \
+  && curl -LOsS https://releases.rancher.com/compose/v${RANCHER_COMPOSE_VERSION}/rancher-compose-linux-amd64-v${RANCHER_COMPOSE_VERSION}.tar.gz \
   && mkdir rancher-compose \
-	&& tar -xvzf rancher-compose-linux-amd64.tar.gz -C rancher-compose --strip-components=2 \
-	&& mv rancher-compose/rancher-compose /usr/local/bin/rancher-compose \
-	&& chmod +x /usr/local/bin/rancher-compose \
-	&& rm -r rancher-compose rancher-compose-linux-amd64.tar.gz
+  && tar -xvzf rancher-compose-linux-amd64-v${RANCHER_COMPOSE_VERSION}.tar.gz -C rancher-compose --strip-components=2 \
+  && mv rancher-compose/rancher-compose /usr/local/bin/rancher-compose \
+  && chmod +x /usr/local/bin/rancher-compose \
+  && rm -r rancher-compose rancher-compose-linux-amd64-v${RANCHER_COMPOSE_VERSION}.tar.gz \
+
+  # cleanup tmp
+  && echo " ---> Cleaning" \
+  # && apk del --no-cache $TMP_APK \
+  && rm -rf /var/cache/apk/* \
+  && rm -rf /tmp/* \
+
+  && echo " ---> Config" \
+  && adduser -D -s /bin/false -g 'GitLab CI Runner' ${GITLAB_CI_MULTI_RUNNER_USER} \
+  && sudo -HEu ${GITLAB_CI_MULTI_RUNNER_USER} ln -s ${GITLAB_CI_MULTI_RUNNER_DATA_DIR}/.ssh ${GITLAB_CI_MULTI_RUNNER_HOME_DIR}/.ssh
 
 ADD entrypoint.sh /
 RUN chmod +x /entrypoint.sh

@@ -55,6 +55,7 @@ configure_ci_runner() {
           -n -u "${CI_SERVER_URL}" -r "${RUNNER_TOKEN}" --name "${RUNNER_DESCRIPTION}" --executor "${RUNNER_EXECUTOR}" \
           $(ENV_VARS_TMP=($ENV_VARS); printf " --env %s" "${ENV_VARS_TMP[@]}") \
           --docker-volumes /var/run/docker.sock:/var/run/docker.sock \
+          --docker-volumes /etc/resolv.conf:/etc/resolv.conf \
 
     else
       sudo -HEu ${GITLAB_CI_MULTI_RUNNER_USER} \
