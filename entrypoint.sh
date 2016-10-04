@@ -55,18 +55,16 @@ configure_ci_runner() {
           -n -u "${CI_SERVER_URL}" -r "${RUNNER_TOKEN}" --name "${RUNNER_DESCRIPTION}" --executor "${RUNNER_EXECUTOR}" \
           --docker-volumes /var/run/docker.sock:/var/run/docker.sock \
           $(if [[ -n ${ENV_VARS} ]]; then ENV_VARS_TMP=($ENV_VARS); printf " --env %s" "${ENV_VARS_TMP[@]}"; fi)
-          # --docker-label io.rancher.container.dns=true --docker-label io.rancher.container.network=true
+          # --docker-label io.rancher.container.network=true
     else
       sudo -HEu ${GITLAB_CI_MULTI_RUNNER_USER} \
         gitlab-ci-multi-runner register --config ${GITLAB_CI_MULTI_RUNNER_DATA_DIR}/config.toml
     fi
-
+    # change check interval from 1s to 10s
     sudo -HEu ${GITLAB_CI_MULTI_RUNNER_USER} \
       sed -i 's/check_interval = 0/check_interval = 10/g' ${GITLAB_CI_MULTI_RUNNER_DATA_DIR}/config.toml
-    sudo -HEu ${GITLAB_CI_MULTI_RUNNER_USER} \
-      sed -i 's/tls_verify = true/tls_verify = false/g' ${GITLAB_CI_MULTI_RUNNER_DATA_DIR}/config.toml
-    sudo -HEu ${GITLAB_CI_MULTI_RUNNER_USER} \
-      sed -i '/\[\[runners\]\]/a\  tls-skip-verify = true' ${GITLAB_CI_MULTI_RUNNER_DATA_DIR}/config.toml
+    # add rancher network support
+    # TODO: migrate to --docker-label when available
     sudo -HEu ${GITLAB_CI_MULTI_RUNNER_USER} \
       sed -i '/\[runners.docker\]/a\    dns = ["169.254.169.250"]' ${GITLAB_CI_MULTI_RUNNER_DATA_DIR}/config.toml
     sudo -HEu ${GITLAB_CI_MULTI_RUNNER_USER} \
