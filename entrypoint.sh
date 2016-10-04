@@ -54,7 +54,7 @@ configure_ci_runner() {
         gitlab-ci-multi-runner register --config ${GITLAB_CI_MULTI_RUNNER_DATA_DIR}/config.toml \
           -n -u "${CI_SERVER_URL}" -r "${RUNNER_TOKEN}" --name "${RUNNER_DESCRIPTION}" --executor "${RUNNER_EXECUTOR}" \
           --docker-volumes /var/run/docker.sock:/var/run/docker.sock \
-          $(ENV_VARS_TMP=($ENV_VARS); printf " --env %s" "${ENV_VARS_TMP[@]}")
+          $(if [[ -n ${ENV_VARS} ]]; then ENV_VARS_TMP=($ENV_VARS); printf " --env %s" "${ENV_VARS_TMP[@]}"; fi)
           # --docker-label io.rancher.container.dns=true --docker-label io.rancher.container.network=true
     else
       sudo -HEu ${GITLAB_CI_MULTI_RUNNER_USER} \
