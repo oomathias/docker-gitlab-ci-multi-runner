@@ -29,38 +29,50 @@ LABEL org.label-schema.name="docker-gitlab-ci-multi-runner" \
 # Install packages
 RUN \
   # tmp
-  echo " ---> Initializing and Updating" \
-  # && TMP_APK='' \
-  # && apk add --update --no-cache $TMP_APK \
-  && apk add --update --no-cache \
-    bash ca-certificates curl docker git grep libc6-compat \
-    openrc openssh-client openssl sudo tar unzip wget \
+  echo " ---> Upgrading OS and installing dependencies" \
+  && TMP_APK='curl grep tar' \
+  && apk --update upgrade \
+  && apk add $TMP_APK \
+    bash \
+    ca-certificates \
+    docker \
+    git \
+    openrc \
+    openssh-client \
+    openssl \
+    sudo \
 
   # dumb-init
-  && echo " ---> Installing dumb-init v${DUMB_INIT_VERSION}" \
-  && curl -LOsS https://github.com/Yelp/dumb-init/releases/download/v${DUMB_INIT_VERSION}/dumb-init_${DUMB_INIT_VERSION}_amd64 \
-  && curl -LOsS https://github.com/Yelp/dumb-init/releases/download/v${DUMB_INIT_VERSION}/sha256sums \
+  && echo " ---> Installing dumb-init (${DUMB_INIT_VERSION})" \
+  && >&2 echo "dumb-init_${DUMB_INIT_VERSION}_amd64" \
+  && curl -#LOS https://github.com/Yelp/dumb-init/releases/download/v${DUMB_INIT_VERSION}/dumb-init_${DUMB_INIT_VERSION}_amd64 \
+  && >&2 echo "sha256sums" \
+  && curl -#LOS https://github.com/Yelp/dumb-init/releases/download/v${DUMB_INIT_VERSION}/sha256sums \
   && fgrep "dumb-init_${DUMB_INIT_VERSION}_amd64$" sha256sums | sha256sum -c - \
   && mv dumb-init_${DUMB_INIT_VERSION}_amd64 /usr/local/bin/dumb-init \
   && chmod +x /usr/local/bin/dumb-init \
   && rm sha256sums \
 
   # glibc
-  && echo " ---> Installing glibc v${GLIBC_VERSION}" \
-  && curl -LOsS https://github.com/sgerrand/alpine-pkg-glibc/releases/download/${GLIBC_VERSION}/glibc-${GLIBC_VERSION}.apk \
-  && curl -LsS -o /etc/apk/keys/sgerrand.rsa.pub https://github.com/sgerrand/alpine-pkg-glibc/releases/download/${GLIBC_VERSION}/sgerrand.rsa.pub \
+  && echo " ---> Installing glibc (${GLIBC_VERSION})" \
+  && >&2 echo "glibc-${GLIBC_VERSION}.apk" \
+  && curl -#LOS https://github.com/sgerrand/alpine-pkg-glibc/releases/download/${GLIBC_VERSION}/glibc-${GLIBC_VERSION}.apk \
+  && >&2 echo "sgerrand.rsa.pub" \
+  && curl -#LS -o /etc/apk/keys/sgerrand.rsa.pub https://github.com/sgerrand/alpine-pkg-glibc/releases/download/${GLIBC_VERSION}/sgerrand.rsa.pub \
   && apk add glibc-${GLIBC_VERSION}.apk \
   && rm /etc/apk/keys/sgerrand.rsa.pub glibc-${GLIBC_VERSION}.apk \
 
   # gitlab-ci-multi-runner
-  && echo " ---> Installing gitlab-ci-multi-runner v${GITLAB_CI_MULTI_RUNNER_VERSION}" \
-  && curl -LsS -o /usr/local/bin/gitlab-ci-multi-runner https://gitlab-ci-multi-runner-downloads.s3.amazonaws.com/v${GITLAB_CI_MULTI_RUNNER_VERSION}/binaries/gitlab-ci-multi-runner-linux-amd64 \
+  && echo " ---> Installing gitlab-ci-multi-runner (${GITLAB_CI_MULTI_RUNNER_VERSION})" \
+  && >&2 echo "gitlab-ci-multi-runner-linux-amd64" \
+  && curl -#LS -o /usr/local/bin/gitlab-ci-multi-runner https://gitlab-ci-multi-runner-downloads.s3.amazonaws.com/v${GITLAB_CI_MULTI_RUNNER_VERSION}/binaries/gitlab-ci-multi-runner-linux-amd64 \
   && chmod +x /usr/local/bin/gitlab-ci-multi-runner \
   && ln -s /usr/local/bin/gitlab-ci-multi-runner /usr/local/bin/gitlab-runner \
 
   # rancher-compose
-  && echo " ---> Installing rancher-compose v${RANCHER_COMPOSE_VERSION}" \
-  && curl -LOsS https://releases.rancher.com/compose/v${RANCHER_COMPOSE_VERSION}/rancher-compose-linux-amd64-v${RANCHER_COMPOSE_VERSION}.tar.gz \
+  && echo " ---> Installing rancher-compose (${RANCHER_COMPOSE_VERSION})" \
+  && >&2 echo "rancher-compose-linux-amd64-v${RANCHER_COMPOSE_VERSION}.tar.gz" \
+  && curl -#LOS https://releases.rancher.com/compose/v${RANCHER_COMPOSE_VERSION}/rancher-compose-linux-amd64-v${RANCHER_COMPOSE_VERSION}.tar.gz \
   && mkdir rancher-compose \
   && tar -xvzf rancher-compose-linux-amd64-v${RANCHER_COMPOSE_VERSION}.tar.gz -C rancher-compose --strip-components=2 \
   && mv rancher-compose/rancher-compose /usr/local/bin/rancher-compose \
@@ -69,7 +81,7 @@ RUN \
 
   # cleanup tmp
   && echo " ---> Cleaning" \
-  # && apk del --no-cache $TMP_APK \
+  && apk del --purge $TMP_APK \
   && rm -rf /var/cache/apk/* \
   && rm -rf /tmp/* \
 

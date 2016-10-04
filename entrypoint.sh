@@ -53,16 +53,28 @@ configure_ci_runner() {
       sudo -HEu ${GITLAB_CI_MULTI_RUNNER_USER} \
         gitlab-ci-multi-runner register --config ${GITLAB_CI_MULTI_RUNNER_DATA_DIR}/config.toml \
           -n -u "${CI_SERVER_URL}" -r "${RUNNER_TOKEN}" --name "${RUNNER_DESCRIPTION}" --executor "${RUNNER_EXECUTOR}" \
-          $(ENV_VARS_TMP=($ENV_VARS); printf " --env %s" "${ENV_VARS_TMP[@]}") \
           --docker-volumes /var/run/docker.sock:/var/run/docker.sock \
-          --docker-tlsverify false \
-          --docker-dns-search rancher.internal \
-          --docker-dns 169.254.169.250
+          $(ENV_VARS_TMP=($ENV_VARS); printf " --env %s" "${ENV_VARS_TMP[@]}")
           # --docker-label io.rancher.container.dns=true --docker-label io.rancher.container.network=true
     else
       sudo -HEu ${GITLAB_CI_MULTI_RUNNER_USER} \
         gitlab-ci-multi-runner register --config ${GITLAB_CI_MULTI_RUNNER_DATA_DIR}/config.toml
     fi
+
+    sudo -HEu ${GITLAB_CI_MULTI_RUNNER_USER} \
+      sed -i 's/check_interval = 0/check_interval = 10/g' ${GITLAB_CI_MULTI_RUNNER_DATA_DIR}/config.toml
+    sudo -HEu ${GITLAB_CI_MULTI_RUNNER_USER} \
+      sed -i 's/tls_verify = true/tls_verify = false/g' ${GITLAB_CI_MULTI_RUNNER_DATA_DIR}/config.toml
+    sudo -HEu ${GITLAB_CI_MULTI_RUNNER_USER} \
+      sed -i '/\[\[runners\]\]/a\  tls-skip-verify = true' ${GITLAB_CI_MULTI_RUNNER_DATA_DIR}/config.toml
+    sudo -HEu ${GITLAB_CI_MULTI_RUNNER_USER} \
+      sed -i '/\[runners.docker\]/a\    dns = ["169.254.169.250"]' ${GITLAB_CI_MULTI_RUNNER_DATA_DIR}/config.toml
+    sudo -HEu ${GITLAB_CI_MULTI_RUNNER_USER} \
+      sed -i '/\[runners.docker\]/a\    dns_search = ["rancher.internal"]' ${GITLAB_CI_MULTI_RUNNER_DATA_DIR}/config.toml
+
+    echo "Config:"
+    echo ""
+    cat ${GITLAB_CI_MULTI_RUNNER_DATA_DIR}/config.toml
   fi
 }
 
