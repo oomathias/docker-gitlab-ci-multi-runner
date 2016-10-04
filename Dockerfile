@@ -56,6 +56,7 @@ RUN \
   && echo " ---> Installing gitlab-ci-multi-runner v${GITLAB_CI_MULTI_RUNNER_VERSION}" \
   && curl -LsS -o /usr/local/bin/gitlab-ci-multi-runner https://gitlab-ci-multi-runner-downloads.s3.amazonaws.com/v${GITLAB_CI_MULTI_RUNNER_VERSION}/binaries/gitlab-ci-multi-runner-linux-amd64 \
   && chmod +x /usr/local/bin/gitlab-ci-multi-runner \
+  && ln -s /usr/local/bin/gitlab-ci-multi-runner /usr/local/bin/gitlab-runner \
 
   # rancher-compose
   && echo " ---> Installing rancher-compose v${RANCHER_COMPOSE_VERSION}" \
