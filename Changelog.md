@@ -1,5 +1,9 @@
 # Changelog
 
+**1.8.0**
+- gitlab-ci-multi-runner: upgrade to 1.8.0
+- dumb-init: upgrade to 1.2.0
+
 **1.6.0**
 - gitlab-ci-multi-runner: upgrade to 1.6.0
 
