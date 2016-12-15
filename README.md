@@ -1,5 +1,3 @@
-# >>>> DO NOT USE THIS REPO YET <<<<
-
 [![Docker Repository on Quay](https://quay.io/repository/oomathias/docker-gitlab-ci-multi-runner/status "Docker Repository on Quay")](https://quay.io/repository/oomathias/docker-gitlab-ci-multi-runner)
 
 # oomathias/gitlab-ci-multi-runner:latest
