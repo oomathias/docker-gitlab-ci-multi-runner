@@ -60,16 +60,10 @@ configure_ci_runner() {
       sudo -HEu ${GITLAB_CI_MULTI_RUNNER_USER} \
         gitlab-ci-multi-runner register --config ${GITLAB_CI_MULTI_RUNNER_DATA_DIR}/config.toml
     fi
-    # change check interval from 1s to 10s
-    sudo -HEu ${GITLAB_CI_MULTI_RUNNER_USER} \
-      sed -i 's/check_interval = 0/check_interval = 10/g' ${GITLAB_CI_MULTI_RUNNER_DATA_DIR}/config.toml
     # add rancher network support
     # TODO: migrate to --docker-label when available
     sudo -HEu ${GITLAB_CI_MULTI_RUNNER_USER} \
-      sed -i '/\[runners.docker\]/a\    dns = ["169.254.169.250"]' ${GITLAB_CI_MULTI_RUNNER_DATA_DIR}/config.toml
-    sudo -HEu ${GITLAB_CI_MULTI_RUNNER_USER} \
-      sed -i '/\[runners.docker\]/a\    dns_search = ["rancher.internal"]' ${GITLAB_CI_MULTI_RUNNER_DATA_DIR}/config.toml
-
+      sed -i '/\[runners.docker\]/a\    dns = ["169.254.169.250", "8.8.8.8"]' ${GITLAB_CI_MULTI_RUNNER_DATA_DIR}/config.toml
     echo "Config:"
     echo ""
     cat ${GITLAB_CI_MULTI_RUNNER_DATA_DIR}/config.toml
