@@ -1,5 +1,8 @@
 # Changelog
 
+**1.10.0**
+- gitlab-ci-multi-runner: upgrade to 1.10.0
+
 **1.9.1**
 - gitlab-ci-multi-runner: upgrade to 1.9.1
 - rancher-compose: upgrade to 0.12.1
