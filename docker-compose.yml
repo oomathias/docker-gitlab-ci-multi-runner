@@ -8,6 +8,7 @@ gitlab-runner-shell:
     - RUNNER_DESCRIPTION=shell
     - RUNNER_TAG_LIST=shell
     - RUNNER_EXECUTOR=shell
+    - RANCHER_NETWORK=true
 
     - RANCHER_URL=
     - RANCHER_ACCESS_KEY=
@@ -24,5 +25,6 @@ gitlab-runner-docker:
     - RUNNER_DESCRIPTION=docker
     - RUNNER_TAG_LIST=docker
     - RUNNER_EXECUTOR=docker
-    - ENV_VARS=DOCKER_API_VERSION=1.23 REGISTRY_LOGIN= REGISTRY_PWD= REGISTRY_URL=
+    - RANCHER_NETWORK=true
+    - ENV_VARS=REGISTRY_LOGIN= REGISTRY_PWD= REGISTRY_URL=
     - DOCKER_IMAGE=docker:latest

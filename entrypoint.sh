@@ -50,20 +50,25 @@ grant_access_to_docker_socket() {
 configure_ci_runner() {
   if [[ ! -e ${GITLAB_CI_MULTI_RUNNER_DATA_DIR}/config.toml ]]; then
     if [[ -n ${CI_SERVER_URL} && -n ${RUNNER_TOKEN} && -n ${RUNNER_DESCRIPTION} && -n ${RUNNER_EXECUTOR} ]]; then
+      if [[ "${RUNNER_EXECUTOR}" == "docker" ]];then
+          RUNNER_DOCKER_ARGS="$RUNNER_DOCKER_ARGS --docker-volumes /var/run/docker.sock:/var/run/docker.sock"
+      fi
       sudo -HEu ${GITLAB_CI_MULTI_RUNNER_USER} \
         gitlab-ci-multi-runner register --config ${GITLAB_CI_MULTI_RUNNER_DATA_DIR}/config.toml \
           -n -u "${CI_SERVER_URL}" -r "${RUNNER_TOKEN}" --name "${RUNNER_DESCRIPTION}" --executor "${RUNNER_EXECUTOR}" \
-          --docker-volumes /var/run/docker.sock:/var/run/docker.sock \
+          ${RUNNER_DOCKER_ARGS} \
           $(if [[ -n ${ENV_VARS} ]]; then ENV_VARS_TMP=($ENV_VARS); printf " --env %s" "${ENV_VARS_TMP[@]}"; fi)
           # --docker-label io.rancher.container.network=true
     else
       sudo -HEu ${GITLAB_CI_MULTI_RUNNER_USER} \
         gitlab-ci-multi-runner register --config ${GITLAB_CI_MULTI_RUNNER_DATA_DIR}/config.toml
     fi
-    # add rancher network support
-    # TODO: migrate to --docker-label when available
-    sudo -HEu ${GITLAB_CI_MULTI_RUNNER_USER} \
-      sed -i '/\[runners.docker\]/a\    dns = ["169.254.169.250", "8.8.8.8"]' ${GITLAB_CI_MULTI_RUNNER_DATA_DIR}/config.toml
+    if [[ -n "${RANCHER_NETWORK}" ]]; then
+      # add rancher network support
+      # TODO: migrate to --docker-label when available
+      sudo -HEu ${GITLAB_CI_MULTI_RUNNER_USER} \
+        sed -i '/\[runners.docker\]/a\    dns = ["169.254.169.250"]' ${GITLAB_CI_MULTI_RUNNER_DATA_DIR}/config.toml
+    fi
     echo "Config:"
     echo ""
     cat ${GITLAB_CI_MULTI_RUNNER_DATA_DIR}/config.toml
