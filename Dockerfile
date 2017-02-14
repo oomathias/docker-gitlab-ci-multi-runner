@@ -89,7 +89,7 @@ RUN \
   && adduser -D -s /bin/false -g 'GitLab CI Runner' ${GITLAB_CI_MULTI_RUNNER_USER} \
   && sudo -HEu ${GITLAB_CI_MULTI_RUNNER_USER} ln -s ${GITLAB_CI_MULTI_RUNNER_DATA_DIR}/.ssh ${GITLAB_CI_MULTI_RUNNER_HOME_DIR}/.ssh
 
-ADD entrypoint.sh /
+COPY entrypoint.sh /
 RUN chmod +x /entrypoint.sh
 
 VOLUME ["${GITLAB_CI_MULTI_RUNNER_DATA_DIR}"]
