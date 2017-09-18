@@ -7,7 +7,7 @@ ARG BUILD_DATE
 ENV DUMB_INIT_VERSION="1.2.0" \
     GLIBC_VERSION="2.23-r3" \
     RANCHER_COMPOSE_VERSION="0.12.5" \
-    GITLAB_CI_MULTI_RUNNER_VERSION="9.2.0" \
+    GITLAB_CI_MULTI_RUNNER_VERSION="9.5.0" \
     GITLAB_CI_MULTI_RUNNER_USER=gitlab_ci_multi_runner \
     GITLAB_CI_MULTI_RUNNER_HOME_DIR="/home/gitlab_ci_multi_runner"
 ENV GITLAB_CI_MULTI_RUNNER_DATA_DIR="${GITLAB_CI_MULTI_RUNNER_HOME_DIR}/data"
@@ -48,7 +48,7 @@ RUN \
   && curl -#LOS https://github.com/Yelp/dumb-init/releases/download/v${DUMB_INIT_VERSION}/dumb-init_${DUMB_INIT_VERSION}_amd64 \
   && >&2 echo "sha256sums" \
   && curl -#LOS https://github.com/Yelp/dumb-init/releases/download/v${DUMB_INIT_VERSION}/sha256sums \
-  # && grep -F "dumb-init_${DUMB_INIT_VERSION}_amd64$" sha256sums | sha256sum -c - \
+  # && fgrep "dumb-init_${DUMB_INIT_VERSION}_amd64$" sha256sums | sha256sum -c - \
   && mv dumb-init_${DUMB_INIT_VERSION}_amd64 /usr/local/bin/dumb-init \
   && chmod +x /usr/local/bin/dumb-init \
   && rm sha256sums \

@@ -1,5 +1,8 @@
 # Changelog
 
+**9.5.0**
+- gitlab-ci-multi-runner: upgrade to 9.5.0
+
 **9.2.0**
 - gitlab-ci-multi-runner: upgrade to 9.2.0
 
