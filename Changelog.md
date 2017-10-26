@@ -1,5 +1,26 @@
 # Changelog
 
+**10.1.0**
+- gitlab-ci-multi-runner -> gitlab-runner
+- gitlab-runner: upgrade to 10.1.0
+
+## Available variables
+
+You can customise the runner with the following env variables:
+- CA_CERTIFICATES_PATH: the path to your certificate
+- RUNNER_CONCURRENT: the number of concurrent job the runner can start
+- CI_SERVER_URL: your server URL (suffixed by /ci)
+- RUNNER_TOKEN: the runner token corresponding to your project
+- RUNNER_EXECUTOR: the executor to start
+- RUNNER_DESCRIPTION: the description of the runner, displayed in gitlab ui
+- RUNNER_DOCKER_IMAGE: the default image to run when starting a build
+- RUNNER_DOCKER_MODE: the docker mode to use, socket or dind
+- RUNNER_DOCKER_PRIVATE_REGISTRY_URL: url of private registry the runner should access
+- RUNNER_DOCKER_PRIVATE_REGISTRY_TOKEN: token of private registry the runner should access
+- RUNNER_DOCKER_ADDITIONAL_VOLUME: additionals volumes to share between host and jobs
+- RUNNER_OUTPUT_LIMIT: output limit in KB that a build can produce
+- RUNNER_AUTOUNREGISTER: auto unregister the runner when the container stops
+
 **9.5.0**
 - gitlab-ci-multi-runner: upgrade to 9.5.0
 

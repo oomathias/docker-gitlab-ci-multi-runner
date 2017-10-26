@@ -64,6 +64,8 @@ docker build -t oomathias/gitlab-ci-multi-runner github.com/oomathias/docker-git
 
 Before a runner can process your CI jobs, it needs to be authorized to access the the GitLab CI server. The `CI_SERVER_URL`, `RUNNER_TOKEN`, `RUNNER_DESCRIPTION` and `RUNNER_EXECUTOR` environment variables are used to register the runner on GitLab CI.
 
+You can use any ENV variable supported by the gitlab ci runner.
+
 ```bash
 docker run --name gitlab-ci-multi-runner -d --restart=always \
   --volume /srv/docker/gitlab-runner:/home/gitlab_ci_multi_runner/data \
@@ -75,6 +77,62 @@ docker run --name gitlab-ci-multi-runner -d --restart=always \
 *Alternatively, you can use the sample [docker-compose.yml](docker-compose.yml) file to start the container using [Docker Compose](https://docs.docker.com/compose/)*
 
 Update the values of `CI_SERVER_URL`, `RUNNER_TOKEN` and `RUNNER_DESCRIPTION` in the above command. If these enviroment variables are not specified, you will be prompted to enter these details interactively on first run.
+
+## Available variables
+
+You can customise the runner with the following env variables:
+- CA_CERTIFICATES_PATH: the path to your certificate
+- RUNNER_CONCURRENT: the number of concurrent job the runner can start
+- CI_SERVER_URL: your server URL (suffixed by /ci)
+- RUNNER_TOKEN: the runner token corresponding to your project
+- RUNNER_EXECUTOR: the executor to start
+- RUNNER_DESCRIPTION: the description of the runner, displayed in gitlab ui
+- RUNNER_DOCKER_IMAGE: the default image to run when starting a build
+- RUNNER_DOCKER_MODE: the docker mode to use, socket or dind
+- RUNNER_DOCKER_PRIVATE_REGISTRY_URL: url of private registry the runner should access
+- RUNNER_DOCKER_PRIVATE_REGISTRY_TOKEN: token of private registry the runner should access
+- RUNNER_DOCKER_ADDITIONAL_VOLUME: additionals volumes to share between host and jobs
+- RUNNER_OUTPUT_LIMIT: output limit in KB that a build can produce
+- RUNNER_AUTOUNREGISTER: auto unregister the runner when the container stops
+
+## Using docker executor
+
+You can use the docker executor by using `RUNNER_EXECUTOR=docker`. You must provide a docker image to use in `RUNNER_DOCKER_IMAGE` (e.g. docker:latest)
+
+If `RUNNER_DOCKER_MODE` is set to `socket`, the docker socket is shared between the runner and the build container.  If it is not, you must use docker in docker service in your .gitlabci.yml definitions.
+
+Start the docker runner in socket mode :
+```bash
+docker run --name gitlab-ci-multi-runner -d --restart=always \
+  --volume /var/run/docker.sock:/var/run/docker.sock
+  --volume /srv/docker/gitlab-runner:/home/gitlab_ci_multi_runner/data \
+  --env='CI_SERVER_URL=http://git.example.com/ci' --env='RUNNER_TOKEN=xxxxxxxxx' \
+  --env='RUNNER_DESCRIPTION=myrunner' --env='RUNNER_EXECUTOR=docker' \
+  --env='RUNNER_DOCKER_IMAGE=docker:latest' --env='RUNNER_DOCKER_MODE=socket'
+  oomathias/gitlab-ci-multi-runner:latest
+```
+
+Start the docker runner in dind mode :
+```bash
+docker run --name gitlab-ci-multi-runner -d --restart=always \
+  --volume /var/run/docker.sock:/var/run/docker.sock
+  --volume /srv/docker/gitlab-runner:/home/gitlab_ci_multi_runner/data \
+  --env='CI_SERVER_URL=http://git.example.com/ci' --env='RUNNER_TOKEN=xxxxxxxxx' \
+  --env='RUNNER_DESCRIPTION=myrunner' --env='RUNNER_EXECUTOR=docker' \
+  --env='RUNNER_DOCKER_IMAGE=docker:latest' --env='RUNNER_DOCKER_MODE=dind'
+  oomathias/gitlab-ci-multi-runner:latest
+```
+
+If you want to share volumes between your containers and the runner in socket mode, use the `RUNNER_DOCKER_ADDITIONAL_VOLUME` variable to share `/builds:/builds`.
+
+You can increase the log maximum size by setting the RUNNER_OUTPUT_LIMIT variable (in kb) 
+
+
+See https://docs.gitlab.com/ce/ci/docker/using_docker_build.html for more info.
+
+## Concurrent jobs
+You an setup your runner to start multiple job in parallel by setting the environment variable `RUNNER_CONCURRENT` to the number of jobs you want to run concurrently.
+ 
 
 ## Command-line arguments
 
@@ -118,7 +176,7 @@ The runner is configured to look for trusted SSL certificates at `/home/gitlab_c
 
 Create a file named `ca.crt` in a `certs` folder at the root of your persistent data volume. The `ca.crt` file should contain the root certificates of all the servers you want to trust.
 
-With respect to GitLab, append the contents of the `gitlab.crt` file to `ca.crt`. For more information on the `gitlab.crt` file please refer the [README](https://github.com/oomathias/docker-gitlab/blob/master/README.md#ssl) of the [docker-gitlab](https://github.com/oomathias/docker-gitlab) container.
+With respect to GitLab, append the contents of the `gitlab.crt` file to `ca.crt`. For more information on the `gitlab.crt` file please refer the [README](https://github.com/sameersbn/docker-gitlab/blob/master/README.md#ssl) of the [docker-gitlab](https://github.com/sameersbn/docker-gitlab) container.
 
 Similarly you should also trust the SSL certificate of the GitLab CI server by appending the contents of the `gitlab-ci.crt` file to `ca.crt`.
 
