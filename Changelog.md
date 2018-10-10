@@ -1,5 +1,10 @@
 # Changelog
 
+**11.3.1**
+- gitlab-runner: upgrade to 11.3.1
+- dumb-init: upgrade to 1.2.2
+- glibc: upgrade to 2.28-r0
+
 **10.1.0**
 - gitlab-ci-multi-runner -> gitlab-runner
 - gitlab-runner: upgrade to 10.1.0

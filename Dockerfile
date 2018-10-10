@@ -4,10 +4,10 @@ MAINTAINER Mathias Beugnon <mathias@beugnon.fr>
 ARG VCS_REF
 ARG BUILD_DATE
 
-ENV DUMB_INIT_VERSION="1.2.0" \
-    GLIBC_VERSION="2.23-r3" \
+ENV DUMB_INIT_VERSION="1.2.2" \
+    GLIBC_VERSION="2.28-r0" \
     RANCHER_COMPOSE_VERSION="0.12.5" \
-    GITLAB_RUNNER_VERSION="10.1.0" \
+    GITLAB_RUNNER_VERSION="11.3.1" \
     GITLAB_RUNNER_USER=gitlab_runner \
     GITLAB_RUNNER_HOME_DIR="/home/gitlab_runner"
 ENV GITLAB_RUNNER_DATA_DIR="${GITLAB_RUNNER_HOME_DIR}/data"
@@ -71,7 +71,7 @@ RUN echo " ---> Installing glibc (${GLIBC_VERSION})" \
 && >&2 echo "glibc-${GLIBC_VERSION}.apk" \
 && curl -#LOS https://github.com/sgerrand/alpine-pkg-glibc/releases/download/${GLIBC_VERSION}/glibc-${GLIBC_VERSION}.apk \
 && >&2 echo "sgerrand.rsa.pub" \
-&& curl -#LS -o /etc/apk/keys/sgerrand.rsa.pub https://github.com/sgerrand/alpine-pkg-glibc/releases/download/${GLIBC_VERSION}/sgerrand.rsa.pub \
+&& curl -#LS -o /etc/apk/keys/sgerrand.rsa.pub https://github.com/sgerrand/alpine-pkg-glibc/releases/download/2.27-r0/sgerrand.rsa.pub \
 && apk add glibc-${GLIBC_VERSION}.apk \
 && rm /etc/apk/keys/sgerrand.rsa.pub glibc-${GLIBC_VERSION}.apk
 
