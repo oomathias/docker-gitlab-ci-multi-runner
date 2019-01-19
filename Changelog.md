@@ -1,5 +1,8 @@
 # Changelog
 
+**11.6.0**
+- gitlab-runner: upgrade to 11.6.0
+
 **11.3.1**
 - gitlab-runner: upgrade to 11.3.1
 - dumb-init: upgrade to 1.2.2
