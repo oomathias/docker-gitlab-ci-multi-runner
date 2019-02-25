@@ -1,46 +1,6 @@
-[![Docker Repository on Quay](https://quay.io/repository/oomathias/docker-gitlab-ci-multi-runner/status "Docker Repository on Quay")](https://quay.io/repository/oomathias/docker-gitlab-ci-multi-runner)
+[![Docker Repository on Quay](https://quay.io/repository/oomathias/docker-gitlab-ci-multi-runner/status 'Docker Repository on Quay')](https://quay.io/repository/oomathias/docker-gitlab-ci-multi-runner)
 
 # oomathias/gitlab-ci-multi-runner:latest
-
-- [Introduction](#introduction)
-  - [Contributing](#contributing)
-  - [Issues](#issues)
-  - [Changelog](Changelog.md)
-- [Getting started](#getting-started)
-  - [Installation](#installation)
-  - [Quickstart](#quickstart)
-  - [Command-line arguments](#command-line-arguments)
-  - [Persistence](#persistence)
-  - [Deploy Keys](#deploy-keys)
-  - [Trusting SSL Server Certificates](#trusting-ssl-server-certificates)
-- [Maintenance](#maintenance)
-  - [Upgrading](#upgrading)
-  - [Shell Access](#shell-access)
-- [List of runners using this image](#list-of-runners-using-this-image)
-
-# Introduction
-
-`Dockerfile` to create a [Docker](https://www.docker.com/) container base image for [gitlab-ci-multi-runner](https://gitlab.com/gitlab-org/gitlab-ci-multi-runner). Use this image to build your CI runner images.
-
-## Contributing
-
-If you find this image useful here's how you can help:
-
-- Send a pull request with your awesome features and bug fixes
-- Help users resolve their [issues](../../issues?q=is%3Aopen+is%3Aissue).
-- Support the development of this image with a [donation](http://www.damagehead.com/donate/)
-
-## Issues
-
-Before reporting your issue please try updating Docker to the latest version and check if it resolves the issue. Refer to the Docker [installation guide](https://docs.docker.com/installation) for instructions.
-
-SELinux users should try disabling SELinux using the command `setenforce 0` to see if it resolves the issue.
-
-If the above recommendations do not help then [report your issue](../../issues/new) along with the following information:
-
-- Output of the `docker version` and `docker info` commands
-- The `docker run` command or `docker-compose.yml` used to start the image. Mask out the sensitive bits.
-- Please state if you are using [Boot2Docker](http://www.boot2docker.io), [VirtualBox](https://www.virtualbox.org), etc.
 
 # Getting started
 
@@ -68,19 +28,20 @@ You can use any ENV variable supported by the gitlab ci runner.
 
 ```bash
 docker run --name gitlab-ci-multi-runner -d --restart=always \
-  --volume /srv/docker/gitlab-runner:/home/gitlab_ci_multi_runner/data \
+  --volume /srv/docker/gitlab-runner:/etc/gitlab-runner \
   --env='CI_SERVER_URL=http://git.example.com/ci' --env='RUNNER_TOKEN=xxxxxxxxx' \
   --env='RUNNER_DESCRIPTION=myrunner' --env='RUNNER_EXECUTOR=shell' \
   oomathias/gitlab-ci-multi-runner:latest
 ```
 
-*Alternatively, you can use the sample [docker-compose.yml](docker-compose.yml) file to start the container using [Docker Compose](https://docs.docker.com/compose/)*
+_Alternatively, you can use the sample [docker-compose.yml](docker-compose.yml) file to start the container using [Docker Compose](https://docs.docker.com/compose/)_
 
 Update the values of `CI_SERVER_URL`, `RUNNER_TOKEN` and `RUNNER_DESCRIPTION` in the above command. If these enviroment variables are not specified, you will be prompted to enter these details interactively on first run.
 
 ## Available variables
 
 You can customise the runner with the following env variables:
+
 - CA_CERTIFICATES_PATH: the path to your certificate
 - RUNNER_CONCURRENT: the number of concurrent job the runner can start
 - CI_SERVER_URL: your server URL (suffixed by /ci)
@@ -94,18 +55,22 @@ You can customise the runner with the following env variables:
 - RUNNER_DOCKER_ADDITIONAL_VOLUME: additionals volumes to share between host and jobs
 - RUNNER_OUTPUT_LIMIT: output limit in KB that a build can produce
 - RUNNER_AUTOUNREGISTER: auto unregister the runner when the container stops
+- ENV_VARS: expose environment variables inside the docker image (RUNNER_DOCKER_IMAGE)
+- EXTRA_ARGS: extra arguments for gitlab-runner --run
+- Any others env supported by gitlab-runner
 
 ## Using docker executor
 
-You can use the docker executor by using `RUNNER_EXECUTOR=docker`. You must provide a docker image to use in `RUNNER_DOCKER_IMAGE` (e.g. docker:latest)
+You can use the docker executor by using `RUNNER_EXECUTOR=docker`. You can provide a docker image to use in `RUNNER_DOCKER_IMAGE` (docker:latest by default)
 
-If `RUNNER_DOCKER_MODE` is set to `socket`, the docker socket is shared between the runner and the build container.  If it is not, you must use docker in docker service in your .gitlabci.yml definitions.
+If `RUNNER_DOCKER_MODE` is set to `socket`, the docker socket is shared between the runner and the build container. If it is not, you must use docker in docker service in your .gitlabci.yml definitions.
 
 Start the docker runner in socket mode :
+
 ```bash
 docker run --name gitlab-ci-multi-runner -d --restart=always \
   --volume /var/run/docker.sock:/var/run/docker.sock
-  --volume /srv/docker/gitlab-runner:/home/gitlab_ci_multi_runner/data \
+  --volume /srv/docker/gitlab-runner:/etc/gitlab-runner \
   --env='CI_SERVER_URL=http://git.example.com/ci' --env='RUNNER_TOKEN=xxxxxxxxx' \
   --env='RUNNER_DESCRIPTION=myrunner' --env='RUNNER_EXECUTOR=docker' \
   --env='RUNNER_DOCKER_IMAGE=docker:latest' --env='RUNNER_DOCKER_MODE=socket'
@@ -113,10 +78,11 @@ docker run --name gitlab-ci-multi-runner -d --restart=always \
 ```
 
 Start the docker runner in dind mode :
+
 ```bash
 docker run --name gitlab-ci-multi-runner -d --restart=always \
   --volume /var/run/docker.sock:/var/run/docker.sock
-  --volume /srv/docker/gitlab-runner:/home/gitlab_ci_multi_runner/data \
+  --volume /srv/docker/gitlab-runner:/etc/gitlab-runner \
   --env='CI_SERVER_URL=http://git.example.com/ci' --env='RUNNER_TOKEN=xxxxxxxxx' \
   --env='RUNNER_DESCRIPTION=myrunner' --env='RUNNER_EXECUTOR=docker' \
   --env='RUNNER_DOCKER_IMAGE=docker:latest' --env='RUNNER_DOCKER_MODE=dind'
@@ -125,14 +91,13 @@ docker run --name gitlab-ci-multi-runner -d --restart=always \
 
 If you want to share volumes between your containers and the runner in socket mode, use the `RUNNER_DOCKER_ADDITIONAL_VOLUME` variable to share `/builds:/builds`.
 
-You can increase the log maximum size by setting the RUNNER_OUTPUT_LIMIT variable (in kb) 
-
+You can increase the log maximum size by setting the RUNNER_OUTPUT_LIMIT variable (in kb)
 
 See https://docs.gitlab.com/ce/ci/docker/using_docker_build.html for more info.
 
 ## Concurrent jobs
+
 You an setup your runner to start multiple job in parallel by setting the environment variable `RUNNER_CONCURRENT` to the number of jobs you want to run concurrently.
- 
 
 ## Command-line arguments
 
@@ -140,26 +105,17 @@ You can customize the launch command by specifying arguments to `gitlab-ci-multi
 
 ```bash
 docker run --name gitlab-ci-multi-runner -it --rm \
-  --volume /srv/docker/gitlab-runner:/home/gitlab_ci_multi_runner/data \
+  --volume /srv/docker/gitlab-runner:/etc/gitlab-runner \
   oomathias/gitlab-ci-multi-runner:latest --help
 ```
 
 ## Persistence
 
-For the image to preserve its state across container shutdown and startup you should mount a volume at `/home/gitlab_ci_multi_runner/data`.
-
-> *The [Quickstart](#quickstart) command already mounts a volume for persistence.*
-
-SELinux users should update the security context of the host mountpoint so that it plays nicely with Docker:
-
-```bash
-mkdir -p /srv/docker/gitlab-runner
-chcon -Rt svirt_sandbox_file_t /srv/docker/gitlab-runner
-```
+For the image to preserve its state across container shutdown and startup you should mount a volume at `/etc/gitlab-runner`.
 
 ## Deploy Keys
 
-At first run the image automatically generates SSH deploy keys which are installed at `/home/gitlab_ci_multi_runner/data/.ssh` of the persistent data store. You can replace these keys with your own if you wish to do so.
+At first run the image automatically generates SSH deploy keys which are installed at `/home/gitlab-runner/.ssh` of the persistent data store. You can replace these keys with your own if you wish to do so.
 
 You can use these keys to allow the runner to gain access to your private git repositories over the SSH protocol.
 
@@ -172,7 +128,7 @@ You can use these keys to allow the runner to gain access to your private git re
 
 If your GitLab server is using self-signed SSL certificates then you should make sure the GitLab server's SSL certificate is trusted on the runner for the git clone operations to work.
 
-The runner is configured to look for trusted SSL certificates at `/home/gitlab_ci_multi_runner/data/certs/ca.crt`. This path can be changed using the `CA_CERTIFICATES_PATH` enviroment variable.
+The runner is configured to look for trusted SSL certificates at `/etc/gitlab-runner/certs/ca.crt`. This path can be changed using the `CA_CERTIFICATES_PATH` enviroment variable.
 
 Create a file named `ca.crt` in a `certs` folder at the root of your persistent data volume. The `ca.crt` file should contain the root certificates of all the servers you want to trust.
 
@@ -186,31 +142,31 @@ Similarly you should also trust the SSL certificate of the GitLab CI server by a
 
 To upgrade to newer releases:
 
-  1. Download the updated Docker image:
+1. Download the updated Docker image:
 
-  ```bash
-  docker pull oomathias/gitlab-ci-multi-runner:latest
-  ```
+```bash
+docker pull oomathias/gitlab-ci-multi-runner:latest
+```
 
-  2. Stop the currently running image:
+2. Stop the currently running image:
 
-  ```bash
-  docker stop gitlab-ci-multi-runner
-  ```
+```bash
+docker stop gitlab-ci-multi-runner
+```
 
-  3. Remove the stopped container
+3. Remove the stopped container
 
-  ```bash
-  docker rm -v gitlab-ci-multi-runner
-  ```
+```bash
+docker rm -v gitlab-ci-multi-runner
+```
 
-  4. Start the updated image
+4. Start the updated image
 
-  ```bash
-  docker run -name gitlab-ci-multi-runner -d \
-    [OPTIONS] \
-    oomathias/gitlab-ci-multi-runner:latest
-  ```
+```bash
+docker run -name gitlab-ci-multi-runner -d \
+  [OPTIONS] \
+  oomathias/gitlab-ci-multi-runner:latest
+```
 
 ## Shell Access
 
@@ -219,7 +175,3 @@ For debugging and maintenance purposes you may want access the containers shell.
 ```bash
 docker exec -it gitlab-ci-multi-runner bash
 ```
-
-# List of runners using this image
-
-* [docker-gitlab-ci-multi-runner-ruby](https://github.com/outcoldman/docker-gitlab-ci-multi-runner-ruby) to run ruby builds

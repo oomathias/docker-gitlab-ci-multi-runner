@@ -1,0 +1,140 @@
+#!/bin/bash
+set -e
+
+DATA_DIR="/etc/gitlab-runner"
+HOME_DIR="/home/gitlab-runner"
+CA_CERTIFICATES_PATH=${CA_CERTIFICATES_PATH:-$DATA_DIR/certs/ca.crt}
+LOCAL_CA_PATH="/usr/local/share/ca-certificates/ca.crt"
+
+create_data_dir() {
+  mkdir -p ${DATA_DIR}
+  chown gitlab-runner:nogroup ${DATA_DIR}
+}
+
+generate_ssh_deploy_keys() {
+  sudo -HEu gitlab-runner mkdir -p ${HOME_DIR}/.ssh/
+
+  if [[ ! -e ${HOME_DIR}/.ssh/id_rsa || ! -e ${HOME_DIR}/.ssh/id_rsa.pub ]]; then
+    echo "Generating SSH deploy keys..."
+    rm -rf ${HOME_DIR}/.ssh/id_rsa ${HOME_DIR}/.ssh/id_rsa.pub
+    sudo -HEu gitlab-runner ssh-keygen -t rsa -N "" -f ${HOME_DIR}/.ssh/id_rsa
+
+    echo ""
+    echo -n "Your SSH deploy key is: "
+    cat ${HOME_DIR}/.ssh/id_rsa.pub
+    echo ""
+  fi
+
+  chmod 600 ${HOME_DIR}/.ssh/id_rsa ${HOME_DIR}/.ssh/id_rsa.pub
+  chmod 700 ${HOME_DIR}/.ssh
+  chown -R gitlab-runner:nogroup ${HOME_DIR}/.ssh/
+}
+
+update_ca() {
+    echo "Updating CA certificates..."
+    cp "${CA_CERTIFICATES_PATH}" "${LOCAL_CA_PATH}"
+    update-ca-certificates --fresh >/dev/null
+}
+
+grant_access_to_docker_socket() {
+  if [ -S /var/run/docker.sock ]; then
+    DOCKER_SOCKET_GID=$(stat -c %g /var/run/docker.sock)
+    DOCKER_SOCKET_GROUP=$(stat -c %G /var/run/docker.sock)
+    if [[ ${DOCKER_SOCKET_GROUP} == "UNKNOWN" ]]; then
+      DOCKER_SOCKET_GROUP=docker
+      addgroup -g ${DOCKER_SOCKET_GID} ${DOCKER_SOCKET_GROUP}
+    fi
+    adduser gitlab-runner ${DOCKER_SOCKET_GROUP}
+  fi
+}
+
+configure_docker_credentials() {
+  if [[ -n "${RUNNER_DOCKER_PRIVATE_REGISTRY_URL}" && -n "${RUNNER_DOCKER_PRIVATE_REGISTRY_TOKEN}" && ! -e "${HOME_DIR}/.docker/config.json" ]];then
+    sudo -HEu gitlab-runner mkdir "${HOME_DIR}/.docker"
+    sudo -HEu gitlab-runner \
+    echo "{\"auths\": {\"${RUNNER_DOCKER_PRIVATE_REGISTRY_URL}\": {\"auth\": \"${RUNNER_DOCKER_PRIVATE_REGISTRY_TOKEN}\"}}}" > "${HOME_DIR}/.docker/config.json"
+  fi
+}
+
+configure_ci_runner() {
+  if [[ ! -e ${DATA_DIR}/config.toml ]]; then
+    if [[ -n ${CI_SERVER_URL} && -n ${RUNNER_TOKEN} && -n ${RUNNER_DESCRIPTION} && -n ${RUNNER_EXECUTOR} ]]; then
+      if [[ "${RUNNER_EXECUTOR}" == "docker" ]];then
+        if [[ -n ${RUNNER_DOCKER_IMAGE} ]];then
+          RUNNER_DOCKER_ARGS="--docker-privileged --docker-image ${RUNNER_DOCKER_IMAGE}"
+        fi
+        if [[ "${RUNNER_DOCKER_MODE}" == "socket" ]];then
+          RUNNER_DOCKER_ARGS="$RUNNER_DOCKER_ARGS --docker-volumes /var/run/docker.sock:/var/run/docker.sock"
+        fi
+        if [[ -n ${RUNNER_DOCKER_ADDITIONAL_VOLUME} ]];then
+          RUNNER_DOCKER_ARGS="$RUNNER_DOCKER_ARGS --docker-volumes ${RUNNER_DOCKER_ADDITIONAL_VOLUME}"
+        fi
+      fi
+      sudo -HEu gitlab-runner \
+        gitlab-runner register --config ${DATA_DIR}/config.toml \
+          -n -u "${CI_SERVER_URL}" -r "${RUNNER_TOKEN}" --name "${RUNNER_DESCRIPTION}" --executor "${RUNNER_EXECUTOR}" \
+          --output-limit "${RUNNER_OUTPUT_LIMIT}" \
+          ${RUNNER_DOCKER_ARGS} \
+          $(if [[ -n ${ENV_VARS} ]]; then ENV_VARS_TMP=($ENV_VARS); printf " --env %s" "${ENV_VARS_TMP[@]}"; fi)
+    else
+      sudo -HEu gitlab-runner \
+        gitlab-runner register --config ${DATA_DIR}/config.toml
+    fi
+    cat ${DATA_DIR}/config.toml
+    if [[ -n ${RUNNER_CONCURRENT} ]];then
+      sed -i "s/concurrent = .*/concurrent = ${RUNNER_CONCURRENT}/" ${DATA_DIR}/config.toml
+    fi
+    echo "Config:"
+    echo ""
+    cat ${DATA_DIR}/config.toml
+  fi
+}
+
+# allow arguments to be passed to gitlab-runner
+if [[ ${1:0:1} = '-' ]]; then
+  EXTRA_ARGS="$@"
+  set --
+elif [[ ${1} == gitlab-runner || ${1} == $(which gitlab-runner) ]]; then
+  EXTRA_ARGS="${@:2}"
+  set --
+fi
+
+stop() {
+  echo "Stopping runner"
+  start-stop-daemon --stop \
+    --user gitlab-runner \
+    --group nobody \
+    --pidfile /run/gitlab-runner.pid
+    
+  if [[ "${RUNNER_AUTOUNREGISTER}" == "true" ]];then
+    echo "Unregistering runner from ${CI_SERVER_URL}"
+    sudo -HEu gitlab-runner \
+    gitlab-runner unregister --url ${CI_SERVER_URL} --token $(grep token ${DATA_DIR}/config.toml | awk '{print $3}' | tr -d '"')
+  fi
+}
+trap 'stop' QUIT
+trap 'stop' INT
+trap 'stop' TERM
+
+# default behaviour is to launch gitlab-runner
+if [[ -z ${1} ]]; then
+  create_data_dir
+  if [ -f "${CA_CERTIFICATES_PATH}" ]; then
+    cmp -s "${CA_CERTIFICATES_PATH}" "${LOCAL_CA_PATH}" || update_ca
+  fi
+  generate_ssh_deploy_keys
+  grant_access_to_docker_socket
+  configure_ci_runner
+  configure_docker_credentials
+  
+  start-stop-daemon --start \
+    --user gitlab-runner \
+    --group nobody \
+    --make-pidfile \
+    --pidfile /run/gitlab-runner.pid \
+    --exec $(which gitlab-runner) -- run \
+    --working-directory ${DATA_DIR} \
+    --config ${DATA_DIR}/config.toml ${EXTRA_ARGS}
+else
+  exec "$@"
+fi
