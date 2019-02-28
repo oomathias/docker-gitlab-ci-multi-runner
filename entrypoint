@@ -67,6 +67,9 @@ configure_ci_runner() {
     if [[ -n ${RUNNER_CHECK_INTERVAL} ]];then
       sed -i "s/check_interval = .*/check_interval = ${RUNNER_CHECK_INTERVAL}/" ${DATA_DIR}/config.toml
     fi
+    if [[ -n ${RUNNER_SESSION_TIMEOUT} ]];then
+      sed -i "s/session_timeout = .*/session_timeout = ${RUNNER_SESSION_TIMEOUT}/" ${DATA_DIR}/config.toml
+    fi
     echo "Config:"
     echo ""
     cat ${CONFIG_FILE}

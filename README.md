@@ -41,6 +41,7 @@ You can customise the runner with the following env variables:
 - **RUNNER_ENV**: Custom environment variables injected to build environment. **With support for multi vars** (example: `-e RUNNER_ENV="TEST=4 HELLO=WORLD"`)
 - **RUNNER_EXECUTOR**: Select executor, eg. `shell`, `docker`, etc. (default: `docker`)
 - **RUNNER_NAME**: Runner name, show as descripton in the UI (default: `runner`)
+- **RUNNER_SESSION_TIMEOUT**: How long in seconds the session can stay active after the job completes (which will block the job from finishing), defaults to 1800 (30 minutes).
 - **DOCKER_MODE**: The docker mode to use, `socket` or `dind` or `none`. `socket` will automount `/var/run/docker.sock`, `dind` do nothing special yet (default: `dind`)
 - **CA_CERTIFICATES_PATH**: Set the path to your certificate
 
