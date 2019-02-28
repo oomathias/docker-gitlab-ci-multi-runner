@@ -3,8 +3,10 @@ set -e
 
 DATA_DIR="/etc/gitlab-runner"
 HOME_DIR="/home/gitlab-runner"
-CA_CERTIFICATES_PATH=${CA_CERTIFICATES_PATH:-$DATA_DIR/certs/ca.crt}
 LOCAL_CA_PATH="/usr/local/share/ca-certificates/ca.crt"
+
+CA_CERTIFICATES_PATH=${CA_CERTIFICATES_PATH:-$DATA_DIR/certs/ca.crt}
+CONFIG_FILE=${CONFIG_FILE:-$DATA_DIR/config.toml}
 
 create_data_dir() {
   mkdir -p ${DATA_DIR}
@@ -48,45 +50,33 @@ grant_access_to_docker_socket() {
   fi
 }
 
-configure_docker_credentials() {
-  if [[ -n "${RUNNER_DOCKER_PRIVATE_REGISTRY_URL}" && -n "${RUNNER_DOCKER_PRIVATE_REGISTRY_TOKEN}" && ! -e "${HOME_DIR}/.docker/config.json" ]];then
-    sudo -HEu gitlab-runner mkdir "${HOME_DIR}/.docker"
-    sudo -HEu gitlab-runner \
-    echo "{\"auths\": {\"${RUNNER_DOCKER_PRIVATE_REGISTRY_URL}\": {\"auth\": \"${RUNNER_DOCKER_PRIVATE_REGISTRY_TOKEN}\"}}}" > "${HOME_DIR}/.docker/config.json"
-  fi
-}
-
 configure_ci_runner() {
-  if [[ ! -e ${DATA_DIR}/config.toml ]]; then
-    if [[ -n ${CI_SERVER_URL} && -n ${RUNNER_TOKEN} && -n ${RUNNER_DESCRIPTION} && -n ${RUNNER_EXECUTOR} ]]; then
+  if [[ ! -e ${CONFIG_FILE} ]]; then
+    if [[ -n ${CI_SERVER_URL} && -n ${REGISTRATION_TOKEN} && -n ${RUNNER_NAME} && -n ${RUNNER_EXECUTOR} ]]; then
       if [[ "${RUNNER_EXECUTOR}" == "docker" ]];then
-        if [[ -n ${RUNNER_DOCKER_IMAGE} ]];then
-          RUNNER_DOCKER_ARGS="--docker-privileged --docker-image ${RUNNER_DOCKER_IMAGE}"
-        fi
-        if [[ "${RUNNER_DOCKER_MODE}" == "socket" ]];then
+        if [[ "${DOCKER_MODE}" == "socket" ]];then
           RUNNER_DOCKER_ARGS="$RUNNER_DOCKER_ARGS --docker-volumes /var/run/docker.sock:/var/run/docker.sock"
         fi
-        if [[ -n ${RUNNER_DOCKER_ADDITIONAL_VOLUME} ]];then
-          RUNNER_DOCKER_ARGS="$RUNNER_DOCKER_ARGS --docker-volumes ${RUNNER_DOCKER_ADDITIONAL_VOLUME}"
-        fi
       fi
+      RUNNER_ENV_TMP=${RUNNER_ENV}
+      unset RUNNER_ENV
       sudo -HEu gitlab-runner \
-        gitlab-runner register --config ${DATA_DIR}/config.toml \
-          -n -u "${CI_SERVER_URL}" -r "${RUNNER_TOKEN}" --name "${RUNNER_DESCRIPTION}" --executor "${RUNNER_EXECUTOR}" \
-          --output-limit "${RUNNER_OUTPUT_LIMIT}" \
+        gitlab-runner register \
+          --non-interactive \
+          --config ${CONFIG_FILE} \
           ${RUNNER_DOCKER_ARGS} \
-          $(if [[ -n ${ENV_VARS} ]]; then ENV_VARS_TMP=($ENV_VARS); printf " --env %s" "${ENV_VARS_TMP[@]}"; fi)
+          $(if [[ -n ${RUNNER_ENV_TMP} ]]; then RUNNER_ENV_TMP=($RUNNER_ENV_TMP); printf " --env %s" "${RUNNER_ENV_TMP[@]}"; fi)
+      unset RUNNER_ENV_TMP
     else
       sudo -HEu gitlab-runner \
-        gitlab-runner register --config ${DATA_DIR}/config.toml
+        gitlab-runner register --config ${CONFIG_FILE}
     fi
-    cat ${DATA_DIR}/config.toml
-    if [[ -n ${RUNNER_CONCURRENT} ]];then
-      sed -i "s/concurrent = .*/concurrent = ${RUNNER_CONCURRENT}/" ${DATA_DIR}/config.toml
+    if [[ -n ${RUNNER_CONCURRENCY} ]];then
+      sed -i "s/concurrent = .*/concurrent = ${RUNNER_CONCURRENCY}/" ${DATA_DIR}/config.toml
     fi
     echo "Config:"
     echo ""
-    cat ${DATA_DIR}/config.toml
+    cat ${CONFIG_FILE}
   fi
 }
 
@@ -109,7 +99,7 @@ stop() {
   if [[ "${RUNNER_AUTOUNREGISTER}" == "true" ]];then
     echo "Unregistering runner from ${CI_SERVER_URL}"
     sudo -HEu gitlab-runner \
-    gitlab-runner unregister --url ${CI_SERVER_URL} --token $(grep token ${DATA_DIR}/config.toml | awk '{print $3}' | tr -d '"')
+      gitlab-runner unregister --url ${CI_SERVER_URL} --token $(grep token ${DATA_DIR}/config.toml | awk '{print $3}' | tr -d '"')
   fi
 }
 trap 'stop' QUIT
@@ -125,16 +115,18 @@ if [[ -z ${1} ]]; then
   generate_ssh_deploy_keys
   grant_access_to_docker_socket
   configure_ci_runner
-  configure_docker_credentials
+  
+  
+  unset REGISTRATION_TOKEN
   
   start-stop-daemon --start \
-    --user gitlab-runner \
-    --group nobody \
     --make-pidfile \
     --pidfile /run/gitlab-runner.pid \
-    --exec $(which gitlab-runner) -- run \
-    --working-directory ${DATA_DIR} \
-    --config ${DATA_DIR}/config.toml ${EXTRA_ARGS}
+    --exec $(which gitlab-runner) -- \
+      run \
+        --user gitlab-runner \
+        --working-directory ${HOME_DIR} \
+        --config ${CONFIG_FILE} ${EXTRA_ARGS}
 else
   exec "$@"
 fi

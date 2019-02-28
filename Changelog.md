@@ -5,7 +5,6 @@
 The image is now based from gitlab-runner:alpine
 
 - gitlab-runner: upgrade to 11.8.0
-- docker-compose: 1.23.2
 - docker-machine: from gitlab-runner
 
 **11.6.0**

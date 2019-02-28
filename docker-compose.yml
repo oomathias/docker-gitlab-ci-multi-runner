@@ -1,23 +1,18 @@
 gitlab-runner-shell:
-  image: quay.io/oomathias/docker-gitlab-ci-multi-runner:latest
+  image: oomathias/gitlab-runner:latest
   volumes:
-    - /srv/docker/gitlab-runner/shell:/home/gitlab_ci_multi_runner/data
+    - /srv/docker/gitlab-runner/shell:/etc/gitlab-runner
   environment:
     - CI_SERVER_URL=
     - RUNNER_TOKEN=
     - RUNNER_DESCRIPTION=shell
     - RUNNER_TAG_LIST=shell
     - RUNNER_EXECUTOR=shell
-    - RANCHER_NETWORK=true
-
-    - RANCHER_URL=
-    - RANCHER_ACCESS_KEY=
-    - RANCHER_SECRET_KEY=
 
 gitlab-runner-docker:
-  image: quay.io/oomathias/docker-gitlab-ci-multi-runner:latest
+  image: oomathias/gitlab-runner:latest
   volumes:
-    - /srv/docker/gitlab-runner/docker:/home/gitlab_ci_multi_runner/data
+    - /srv/docker/gitlab-runner/docker:/etc/gitlab-runner
     - /var/run/docker.sock:/var/run/docker.sock:ro
   environment:
     - CI_SERVER_URL=
@@ -25,6 +20,3 @@ gitlab-runner-docker:
     - RUNNER_DESCRIPTION=docker
     - RUNNER_TAG_LIST=docker
     - RUNNER_EXECUTOR=docker
-    - RANCHER_NETWORK=true
-    - ENV_VARS=REGISTRY_LOGIN= REGISTRY_PWD= REGISTRY_URL=
-    - DOCKER_IMAGE=docker:latest
