@@ -10,29 +10,29 @@ docker pull oomathias/gitlab-runner:latest
 
 ## Quickstart
 
-Before a runner can process your CI jobs, it needs to be authorized to access the the GitLab CI server. The `CI_SERVER_URL`, `RUNNER_TOKEN`, `RUNNER_NAME` and `RUNNER_EXECUTOR` environment variables are used to register the runner on GitLab CI.
+Before a runner can process your CI jobs, it needs to be authorized to access the the GitLab CI server. The `CI_SERVER_URL`, `REGISTRATION_TOKEN`, `RUNNER_NAME` and `RUNNER_EXECUTOR` environment variables are used to register the runner on GitLab CI.
 
 You can use any ENV variable supported by the official gitlab-runner.
 
 ```bash
 docker run --name gitlab-runner -d --restart=always \
   --volume /srv/docker/gitlab-runner:/etc/gitlab-runner \
-  --env='CI_SERVER_URL=https://git.example.com' --env='RUNNER_TOKEN=xxxxxxxxx' \
+  --env='CI_SERVER_URL=https://git.example.com' --env='REGISTRATION_TOKEN=xxxxxxxxx' \
   --env='RUNNER_NAME=myrunner' --env='RUNNER_EXECUTOR=shell' \
   oomathias/gitlab-runner:latest
 ```
 
 _Alternatively, you can use the sample [docker-compose.yml](docker-compose.yml) file to start the container using [Docker Compose](https://docs.docker.com/compose/)_
 
-Update the values of `CI_SERVER_URL`, `RUNNER_TOKEN` and `RUNNER_NAME` in the above command. If these environment variables are not specified, you will be prompted to enter these details interactively on first run.
+Update the values of `CI_SERVER_URL`, `REGISTRATION_TOKEN` and `RUNNER_NAME` in the above command. If these environment variables are not specified, you will be prompted to enter these details interactively on first run.
 
 ## Available variables
 
 Mandatory for autoregister:
 
-- **CI_SERVER_URL**: your server URL
-- **RUNNER_TOKEN**: the runner token corresponding to your project
-- **RUNNER_NAME**: the runner name, displayed in gitlab ui
+- **CI_SERVER_URL**: Server URL
+- **REGISTRATION_TOKEN**: Runner registration token
+- **RUNNER_NAME**: Runner name
 
 You can customise the runner with the following env variables:
 
@@ -49,12 +49,10 @@ Any others env supported by gitlab-runner:
 - **RUNNER_TAG_LIST** Tag list
 - **REGISTER_NON_INTERACTIVE** Run registration unattended
 - **REGISTER_LEAVE_RUNNER** Don't remove runner if registration fails
-- **REGISTRATION_TOKEN** Runner's registration token
 - **REGISTER_RUN_UNTAGGED** Register to run untagged builds; defaults to 'true' when 'tag-list' is empty
 - **REGISTER_LOCKED** Lock Runner for current project, defaults to 'true'
 - **REGISTER_MAXIMUM_TIMEOUT** What is the maximum timeout (in seconds) that will be set for job when using this Runner
 - **REGISTER_PAUSED** Set Runner to be paused, defaults to 'false'
-- **RUNNER_NAME** Runner name
 - **RUNNER_LIMIT** Maximum number of builds processed by this runner
 - **RUNNER_OUTPUT_LIMIT** Maximum build trace size in kilobytes
 - **RUNNER_REQUEST_CONCURRENCY** Maximum concurrency for job requests
@@ -188,7 +186,7 @@ Start the docker runner in socket mode :
 docker run --name gitlab-runner -d --restart=always \
   --volume /var/run/docker.sock:/var/run/docker.sock
   --volume /srv/docker/gitlab-runner:/etc/gitlab-runner \
-  --env='CI_SERVER_URL=https://git.example.com' --env='RUNNER_TOKEN=xxxxxxxxx' \
+  --env='CI_SERVER_URL=https://git.example.com' --env='REGISTRATION_TOKEN=xxxxxxxxx' \
   --env='RUNNER_NAME=myrunner' --env='RUNNER_EXECUTOR=docker' \
   --env='DOCKER_IMAGE=docker:latest' --env='DOCKER_MODE=socket'
   oomathias/gitlab-runner:latest
@@ -200,7 +198,7 @@ Start the docker runner in dind mode :
 docker run --name gitlab-runner -d --restart=always \
   --volume /var/run/docker.sock:/var/run/docker.sock
   --volume /srv/docker/gitlab-runner:/etc/gitlab-runner \
-  --env='CI_SERVER_URL=https://git.example.com' --env='RUNNER_TOKEN=xxxxxxxxx' \
+  --env='CI_SERVER_URL=https://git.example.com' --env='REGISTRATION_TOKEN=xxxxxxxxx' \
   --env='RUNNER_NAME=myrunner' --env='RUNNER_EXECUTOR=docker' \
   --env='DOCKER_IMAGE=docker:latest' --env='DOCKER_MODE=dind'
   oomathias/gitlab-runner:latest

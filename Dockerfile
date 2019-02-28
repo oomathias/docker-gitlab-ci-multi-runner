@@ -2,10 +2,9 @@ FROM gitlab/gitlab-runner:alpine-v11.8.0
 MAINTAINER Mathias Beugnon <mathias@beugnon.fr>
 
 ENV GITLAB_RUNNER_VERSION="11.8.0" \
-    DOCKER_COMPOSE_VERSION="1.23.2" \
     RUNNER_CONCURRENCY='' \
     CI_SERVER_URL='' \
-    RUNNER_TOKEN='' \
+    REGISTRATION_TOKEN='' \
     RUNNER_EXECUTOR='docker' \
     DOCKER_IMAGE='docker:latest' \
     DOCKER_MODE='socket' \
@@ -16,8 +15,6 @@ COPY entrypoint /
 
 RUN echo " ---> Install dependencies" \
   && apk add --no-cache \
-    docker \
-    curl \
     openrc \
     openssh-client \
     sudo \

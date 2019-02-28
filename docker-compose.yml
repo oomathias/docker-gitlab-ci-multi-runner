@@ -4,7 +4,7 @@ gitlab-runner-shell:
     - /srv/docker/gitlab-runner/shell:/etc/gitlab-runner
   environment:
     - CI_SERVER_URL=
-    - RUNNER_TOKEN=
+    - REGISTRATION_TOKEN=
     - RUNNER_DESCRIPTION=shell
     - RUNNER_TAG_LIST=shell
     - RUNNER_EXECUTOR=shell
@@ -16,7 +16,7 @@ gitlab-runner-docker:
     - /var/run/docker.sock:/var/run/docker.sock:ro
   environment:
     - CI_SERVER_URL=
-    - RUNNER_TOKEN=
+    - REGISTRATION_TOKEN=
     - RUNNER_DESCRIPTION=docker
     - RUNNER_TAG_LIST=docker
     - RUNNER_EXECUTOR=docker

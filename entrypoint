@@ -38,18 +38,6 @@ update_ca() {
     update-ca-certificates --fresh >/dev/null
 }
 
-grant_access_to_docker_socket() {
-  if [ -S /var/run/docker.sock ]; then
-    DOCKER_SOCKET_GID=$(stat -c %g /var/run/docker.sock)
-    DOCKER_SOCKET_GROUP=$(stat -c %G /var/run/docker.sock)
-    if [[ ${DOCKER_SOCKET_GROUP} == "UNKNOWN" ]]; then
-      DOCKER_SOCKET_GROUP=docker
-      addgroup -g ${DOCKER_SOCKET_GID} ${DOCKER_SOCKET_GROUP}
-    fi
-    adduser gitlab-runner ${DOCKER_SOCKET_GROUP}
-  fi
-}
-
 configure_ci_runner() {
   if [[ ! -e ${CONFIG_FILE} ]]; then
     if [[ -n ${CI_SERVER_URL} && -n ${REGISTRATION_TOKEN} && -n ${RUNNER_NAME} && -n ${RUNNER_EXECUTOR} ]]; then
@@ -113,9 +101,7 @@ if [[ -z ${1} ]]; then
     cmp -s "${CA_CERTIFICATES_PATH}" "${LOCAL_CA_PATH}" || update_ca
   fi
   generate_ssh_deploy_keys
-  grant_access_to_docker_socket
   configure_ci_runner
-  
   
   unset REGISTRATION_TOKEN
   
