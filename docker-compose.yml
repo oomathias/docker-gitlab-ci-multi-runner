@@ -1,22 +1,23 @@
 gitlab-runner-shell:
   image: oomathias/gitlab-runner:latest
   volumes:
-    - /srv/docker/gitlab-runner/shell:/etc/gitlab-runner
+    - /srv/docker/gitlab-runner-shell/config:/etc/gitlab-runner
+    - /srv/docker/gitlab-runner-shell/home:/home/gitlab-runner
   environment:
-    - CI_SERVER_URL=
-    - REGISTRATION_TOKEN=
-    - RUNNER_DESCRIPTION=shell
+    - CI_SERVER_URL=https://git.example.com
+    - REGISTRATION_TOKEN=xxxxxxxxx
+    - RUNNER_NAME=shell
     - RUNNER_TAG_LIST=shell
     - RUNNER_EXECUTOR=shell
 
 gitlab-runner-docker:
   image: oomathias/gitlab-runner:latest
   volumes:
-    - /srv/docker/gitlab-runner/docker:/etc/gitlab-runner
-    - /var/run/docker.sock:/var/run/docker.sock:ro
+    - /srv/docker/gitlab-runner-docker/config:/etc/gitlab-runner
+    - /srv/docker/gitlab-runner-docker/home:/home/gitlab-runner
   environment:
-    - CI_SERVER_URL=
-    - REGISTRATION_TOKEN=
-    - RUNNER_DESCRIPTION=docker
+    - CI_SERVER_URL=https://git.example.com
+    - REGISTRATION_TOKEN=xxxxxxxxx
+    - RUNNER_NAME=docker
     - RUNNER_TAG_LIST=docker
     - RUNNER_EXECUTOR=docker
