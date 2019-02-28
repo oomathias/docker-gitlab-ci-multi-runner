@@ -32,18 +32,19 @@ Mandatory for autoregister:
 
 - **CI_SERVER_URL**: Server URL
 - **REGISTRATION_TOKEN**: Runner registration token
-- **RUNNER_NAME**: Runner name
 
 You can customise the runner with the following env variables:
 
-- **RUNNER_EXECUTOR**: Select executor, eg. `shell`, `docker`, etc. (default: `docker`)
-- **CA_CERTIFICATES_PATH**: Set the path to your certificate
-- **RUNNER_CONCURRENCY**: Set the number of concurrent job the runner can start (default: `1`)
-- **DOCKER_MODE**: The docker mode to use, `socket` or `false`. `socket` will automount `/var/run/docker.sock` (default: `socket`)
 - **RUNNER_AUTOUNREGISTER**: Auto unregister the runner when the container stops (default: `true`)
+- **RUNNER_CHECK_INTERVAL**: Defines the interval length, in seconds, between new jobs check. (default: `3`)
+- **RUNNER_CONCURRENCY**: Set the number of concurrent job the runner can start (default: `1`)
 - **RUNNER_ENV**: Custom environment variables injected to build environment. **With support for multi vars** (example: `-e RUNNER_ENV="TEST=4 HELLO=WORLD"`)
+- **RUNNER_EXECUTOR**: Select executor, eg. `shell`, `docker`, etc. (default: `docker`)
+- **RUNNER_NAME**: Runner name, show as descripton in the UI (default: `runner`)
+- **DOCKER_MODE**: The docker mode to use, `socket` or `dind` or `none`. `socket` will automount `/var/run/docker.sock`, `dind` do nothing special yet (default: `dind`)
+- **CA_CERTIFICATES_PATH**: Set the path to your certificate
 
-Any others env supported by gitlab-runner:
+Any others env supported by gitlab/gitlab-runner:
 
 - **CONFIG_FILE** Config file
 - **RUNNER_TAG_LIST** Tag list

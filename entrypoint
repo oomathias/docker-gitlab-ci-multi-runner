@@ -7,6 +7,8 @@ LOCAL_CA_PATH="/usr/local/share/ca-certificates/ca.crt"
 
 CA_CERTIFICATES_PATH=${CA_CERTIFICATES_PATH:-$DATA_DIR/certs/ca.crt}
 CONFIG_FILE=${CONFIG_FILE:-$DATA_DIR/config.toml}
+RUNNER_NAME=${RUNNER_NAME:-$RUNNER_DESCRIPTION} # DEPRECATED
+REGISTRATION_TOKEN=${REGISTRATION_TOKEN:-$RUNNER_TOKEN} # DEPRECATED
 
 create_data_dir() {
   mkdir -p ${DATA_DIR}
@@ -61,6 +63,9 @@ configure_ci_runner() {
     fi
     if [[ -n ${RUNNER_CONCURRENCY} ]];then
       sed -i "s/concurrent = .*/concurrent = ${RUNNER_CONCURRENCY}/" ${DATA_DIR}/config.toml
+    fi
+    if [[ -n ${RUNNER_CHECK_INTERVAL} ]];then
+      sed -i "s/check_interval = .*/check_interval = ${RUNNER_CHECK_INTERVAL}/" ${DATA_DIR}/config.toml
     fi
     echo "Config:"
     echo ""

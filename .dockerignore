@@ -1,4 +1,5 @@
 .git
-VERSION
+CHANGELOG.md
+LICENSE
 README.md
-Changelog.md
+docker-compose.yml
