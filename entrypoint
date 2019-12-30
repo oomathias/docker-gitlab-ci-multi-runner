@@ -7,8 +7,6 @@ LOCAL_CA_PATH="/usr/local/share/ca-certificates/ca.crt"
 
 CA_CERTIFICATES_PATH=${CA_CERTIFICATES_PATH:-$DATA_DIR/certs/ca.crt}
 CONFIG_FILE=${CONFIG_FILE:-$DATA_DIR/config.toml}
-RUNNER_NAME=${RUNNER_NAME:-$RUNNER_DESCRIPTION} # DEPRECATED
-REGISTRATION_TOKEN=${REGISTRATION_TOKEN:-$RUNNER_TOKEN} # DEPRECATED
 
 create_data_dir() {
   mkdir -p ${DATA_DIR}
@@ -91,7 +89,7 @@ stop() {
     --user gitlab-runner \
     --group nobody \
     --pidfile /run/gitlab-runner.pid
-    
+
   if [[ "${RUNNER_AUTOUNREGISTER}" == "true" ]];then
     echo "Unregistering runner from ${CI_SERVER_URL}"
     sudo -HEu gitlab-runner \
@@ -110,9 +108,9 @@ if [[ -z ${1} ]]; then
   fi
   generate_ssh_deploy_keys
   configure_ci_runner
-  
+
   unset REGISTRATION_TOKEN
-  
+
   start-stop-daemon --start \
     --make-pidfile \
     --pidfile /run/gitlab-runner.pid \

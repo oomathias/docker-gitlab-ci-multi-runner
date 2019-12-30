@@ -1,5 +1,9 @@
 # Changelog
 
+**12.6.0**
+
+- gitlab-runner: upgrade to 12.6.0
+
 **11.8.0**
 
 The image is now based from gitlab-runner:alpine
